@@ -2,12 +2,11 @@ import React, { useState } from "react";
 import Axios from "axios";
 import Cookies from "universal-cookie";
 
-function SignUp() {
+function SignUp({ setIsAuth }) {
   const cookies = new Cookies();
+  const [user, setUser] = useState({});
 
-  const [user, setUser] = useState(null);
-
-  const signUp = ({ setIsAuth }) => {
+  const signUp = () => {
     Axios.post("http://localhost:3001/signup", user).then((res) => {
       const { token, userId, firstName, lastName, username, hashedPassword } =
         res.data;
@@ -27,6 +26,7 @@ function SignUp() {
     <div className="signUp">
       <label>Sign Up</label>
       <input
+        required
         placeholder="First name"
         type="text"
         onChange={(event) => {
@@ -34,6 +34,7 @@ function SignUp() {
         }}
       />
       <input
+        required
         placeholder="Last name"
         type="text"
         onChange={(event) => {
@@ -41,6 +42,7 @@ function SignUp() {
         }}
       />
       <input
+        required
         placeholder="Username"
         type="text"
         onChange={(event) => {
@@ -48,6 +50,7 @@ function SignUp() {
         }}
       />
       <input
+        required
         placeholder="Password"
         type="password"
         onChange={(event) => {

@@ -5,41 +5,59 @@ import Cookies from "universal-cookie";
 const Login = ({ setIsAuth }) => {
   const cookies = new Cookies();
 
-  const [username, setUsername] = useState(null);
-  const [password, setPassword] = useState(null);
+  const [username, setUsername] = useState("");
+  const [password, setPassword] = useState("");
 
-  const login = () => {
-    Axios.post("http://localhost:3001/login", { username, password }).then(
-      (res) => {
-        const { token, userId, firstName, lastName, username } = res.data;
+  const login = async () => {
+    try {
+      const res = await Axios.post("http://localhost:3001/login", {
+        username,
+        password,
+      });
 
-        cookies.set("token", token);
-        cookies.set("userId", userId);
-        cookies.set("firstName", firstName);
-        cookies.set("lastName", lastName);
-        cookies.set("username", username);
+      const {
+        token,
+        userId,
+        firstName,
+        lastName,
+        username: responseUsername,
+      } = res.data;
 
-        setIsAuth(true);
-      }
-    );
+      cookies.set("token", token);
+      cookies.set("userId", userId);
+      cookies.set("firstName", firstName);
+      cookies.set("lastName", lastName);
+      cookies.set("username", responseUsername);
+
+      setIsAuth(true);
+    } catch (err) {
+      console.error(
+        "Erro no login:",
+        err?.response?.data?.message || err.message
+      );
+      alert(
+        "Erro no login: " +
+          (err?.response?.data?.message || "Verifique suas credenciais")
+      );
+    }
   };
 
   return (
     <div className="login">
       <label>Login</label>
       <input
+        required
         placeholder="Username"
         type="text"
-        onChange={(event) => {
-          setUsername(event.target.value);
-        }}
+        value={username}
+        onChange={(event) => setUsername(event.target.value)}
       />
       <input
+        required
         placeholder="Password"
         type="password"
-        onChange={(event) => {
-          setPassword(event.target.value);
-        }}
+        value={password}
+        onChange={(event) => setPassword(event.target.value)}
       />
       <button onClick={login}>Login</button>
     </div>
