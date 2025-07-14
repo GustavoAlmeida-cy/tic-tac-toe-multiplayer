@@ -73,7 +73,7 @@ function JoinGame() {
     <>
       {channel ? (
         <Channel channel={channel}>
-          <Game channel={channel} />
+          <Game channel={channel} onExit={() => setChannel(null)} />
         </Channel>
       ) : (
         <div className="joinGame">

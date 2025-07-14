@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import Board from "./Board";
 
-function Game({ channel }) {
+function Game({ channel, onExit }) {
   const [playersJoined, setPlayersJoined] = useState(
     channel?.state?.watcher_count === 2
   );
@@ -13,9 +13,6 @@ function Game({ channel }) {
 
   useEffect(() => {
     if (!channel) return;
-
-    // Detectar membros e definir quem é "X" e quem é "O"
-    const members = Object.keys(channel.state.members).sort();
 
     // Quem estava esperando (menor id) será "X"
     // Para simplificar, usamos watcher_count para decidir quem está esperando
@@ -49,7 +46,7 @@ function Game({ channel }) {
   }, [channel]);
 
   if (!playersJoined || player === null) {
-    return <div>Waiting for other player to join...</div>;
+    return <h1>Aguardando a entrada de outro jogador...</h1>;
   }
 
   return (
@@ -59,6 +56,7 @@ function Game({ channel }) {
         setResult={setResult}
         player={player}
         startingPlayer={startingPlayer}
+        onLeave={onExit}
       />
     </div>
   );

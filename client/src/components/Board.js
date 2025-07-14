@@ -4,10 +4,13 @@ import Square from "./Square";
 import { Patterns } from "../components/WinningPatterns";
 import GameOver from "./GameOver";
 
-function Board({ result, setResult, player, startingPlayer }) {
+function Board({ result, setResult, player, startingPlayer, onLeave }) {
   const [board, setBoard] = useState(Array(9).fill(""));
   const [turn, setTurn] = useState(startingPlayer);
   const [hasStarted, setHasStarted] = useState(false);
+
+  // Pontos dos jogadores
+  const [score, setScore] = useState({ X: 0, O: 0 });
 
   const { channel } = useChannelStateContext();
   const { client } = useChatContext();
@@ -29,6 +32,11 @@ function Board({ result, setResult, player, startingPlayer }) {
       );
       if (hasWon) {
         setResult({ winner: first, state: "won" });
+        // Atualiza o placar
+        setScore((prev) => ({
+          ...prev,
+          [first]: prev[first] + 1,
+        }));
         return true;
       }
     }
@@ -86,8 +94,7 @@ function Board({ result, setResult, player, startingPlayer }) {
         newBoard[event.data.square] = opponentPlayer;
 
         setBoard(newBoard);
-        // Agora é sua vez:
-        setTurn(player);
+        setTurn(player); // sua vez
       }
     };
 
@@ -103,10 +110,29 @@ function Board({ result, setResult, player, startingPlayer }) {
     setHasStarted(false);
   };
 
+  // Sair da partida
+  const leaveGame = async () => {
+    if (channel) {
+      await channel.stopWatching(); // para receber eventos do canal
+    }
+    if (onLeave) onLeave(); // geralmente limpa estado, redireciona, etc
+  };
+
   if (player === null) return <div>Carregando...</div>;
 
   return (
     <>
+      <div className="board-header">
+        <div className="scoreboard">
+          🎯 <span className="score-label">Placar</span>: X: {score.X} | O:{" "}
+          {score.O}
+        </div>
+
+        <button className="leave-button" onClick={leaveGame}>
+          ❌ Sair da partida
+        </button>
+      </div>
+
       <div className="board">
         {board.map((val, idx) => (
           <Square key={idx} val={val} chooseSquare={() => chooseSquare(idx)} />
