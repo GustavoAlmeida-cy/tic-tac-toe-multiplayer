@@ -1,64 +1,106 @@
-import React, { useState } from "react";
+import React, { useState, useMemo } from "react";
 import Axios from "axios";
 import Cookies from "universal-cookie";
 
 function SignUp({ setIsAuth }) {
-  const cookies = new Cookies();
-  const [user, setUser] = useState({});
+  const cookies = useMemo(() => new Cookies(), []);
 
-  const signUp = () => {
-    Axios.post("http://localhost:3001/signup", user).then((res) => {
-      const { token, userId, firstName, lastName, username, hashedPassword } =
-        res.data;
+  const [firstName, setFirstName] = useState("");
+  const [lastName, setLastName] = useState("");
+  const [username, setUsername] = useState("");
+  const [password, setPassword] = useState("");
 
+  const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
+
+  const signUp = async (event) => {
+    event.preventDefault();
+
+    if (!firstName || !lastName || !username || !password) {
+      setError("Preencha todos os campos");
+      return;
+    }
+
+    setLoading(true);
+    setError("");
+
+    try {
+      const res = await Axios.post("http://localhost:3001/signup", {
+        firstName,
+        lastName,
+        username,
+        password,
+      });
+
+      const {
+        token,
+        userId,
+        firstName: resFirstName,
+        lastName: resLastName,
+        username: resUsername,
+      } = res.data;
+
+      // Salva somente dados essenciais no cookie (não armazene hashedPassword no frontend)
       cookies.set("token", token);
       cookies.set("userId", userId);
-      cookies.set("firstName", firstName);
-      cookies.set("lastName", lastName);
-      cookies.set("username", username);
-      cookies.set("hashedPassword", hashedPassword);
+      cookies.set("firstName", resFirstName);
+      cookies.set("lastName", resLastName);
+      cookies.set("username", resUsername);
 
       setIsAuth(true);
-    });
+    } catch (err) {
+      setError(
+        err?.response?.data?.message ||
+          "Erro ao criar usuário. Tente novamente."
+      );
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
-    <div className="signUp">
+    <form className="signUp" onSubmit={signUp}>
       <label>Sign Up</label>
+
       <input
         required
         placeholder="First name"
         type="text"
-        onChange={(event) => {
-          setUser({ ...user, firstName: event.target.value });
-        }}
+        value={firstName}
+        onChange={(e) => setFirstName(e.target.value)}
+        disabled={loading}
       />
       <input
         required
         placeholder="Last name"
         type="text"
-        onChange={(event) => {
-          setUser({ ...user, lastName: event.target.value });
-        }}
+        value={lastName}
+        onChange={(e) => setLastName(e.target.value)}
+        disabled={loading}
       />
       <input
         required
         placeholder="Username"
         type="text"
-        onChange={(event) => {
-          setUser({ ...user, username: event.target.value });
-        }}
+        value={username}
+        onChange={(e) => setUsername(e.target.value)}
+        disabled={loading}
       />
       <input
         required
         placeholder="Password"
         type="password"
-        onChange={(event) => {
-          setUser({ ...user, password: event.target.value });
-        }}
+        value={password}
+        onChange={(e) => setPassword(e.target.value)}
+        disabled={loading}
       />
-      <button onClick={signUp}>Sign Up</button>
-    </div>
+
+      {error && <p className="error-message">{error}</p>}
+
+      <button type="submit" disabled={loading}>
+        {loading ? "Criando..." : "Sign Up"}
+      </button>
+    </form>
   );
 }
 

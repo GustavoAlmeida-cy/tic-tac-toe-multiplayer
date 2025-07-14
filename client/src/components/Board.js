@@ -4,12 +4,11 @@ import Square from "./Square";
 import { Patterns } from "../components/WinningPatterns";
 import GameOver from "./GameOver";
 
-function Board({ result, setResult, player, startingPlayer, onLeave }) {
+function Board({ result, setResult, player, onLeave }) {
   const [board, setBoard] = useState(Array(9).fill(""));
-  const [turn, setTurn] = useState(startingPlayer);
+  const [turn, setTurn] = useState("X");
+  const [nextStartingPlayer, setNextStartingPlayer] = useState("X");
   const [hasStarted, setHasStarted] = useState(false);
-
-  // Pontos dos jogadores
   const [score, setScore] = useState({ X: 0, O: 0 });
 
   const { channel } = useChannelStateContext();
@@ -32,7 +31,6 @@ function Board({ result, setResult, player, startingPlayer, onLeave }) {
       );
       if (hasWon) {
         setResult({ winner: first, state: "won" });
-        // Atualiza o placar
         setScore((prev) => ({
           ...prev,
           [first]: prev[first] + 1,
@@ -41,7 +39,7 @@ function Board({ result, setResult, player, startingPlayer, onLeave }) {
       }
     }
     return false;
-  }, [setResult, result.state]);
+  }, [result.state, setResult]);
 
   const checkTie = useCallback(() => {
     if (result.state !== "") return false;
@@ -54,14 +52,13 @@ function Board({ result, setResult, player, startingPlayer, onLeave }) {
       return true;
     }
     return false;
-  }, [setResult, result.state]);
+  }, [result.state, setResult]);
 
   useEffect(() => {
     if (!hasStarted || result.state !== "") return;
     if (!checkWin()) checkTie();
   }, [board, checkWin, checkTie, hasStarted, result.state]);
 
-  // Jogada local
   const chooseSquare = async (square) => {
     if (turn !== player || board[square] !== "" || result.state !== "") return;
 
@@ -78,7 +75,6 @@ function Board({ result, setResult, player, startingPlayer, onLeave }) {
     });
   };
 
-  // Jogada recebida do adversário
   useEffect(() => {
     const handleGameMove = (event) => {
       if (
@@ -94,7 +90,7 @@ function Board({ result, setResult, player, startingPlayer, onLeave }) {
         newBoard[event.data.square] = opponentPlayer;
 
         setBoard(newBoard);
-        setTurn(player); // sua vez
+        setTurn(player);
       }
     };
 
@@ -102,20 +98,26 @@ function Board({ result, setResult, player, startingPlayer, onLeave }) {
     return () => channel.off("game-move", handleGameMove);
   }, [channel, client.userID, hasStarted, result.state, player]);
 
-  // Resetar jogo
   const resetGame = () => {
     setBoard(Array(9).fill(""));
-    setTurn(startingPlayer);
+
+    let newStartingPlayer = nextStartingPlayer;
+
+    if (result.state === "won") {
+      newStartingPlayer = result.winner === "X" ? "O" : "X"; // perdedor começa
+    } else if (result.state === "tie") {
+      newStartingPlayer = nextStartingPlayer === "X" ? "O" : "X"; // alterna
+    }
+
+    setNextStartingPlayer(newStartingPlayer);
+    setTurn(newStartingPlayer);
     setResult({ winner: "", state: "" });
     setHasStarted(false);
   };
 
-  // Sair da partida
   const leaveGame = async () => {
-    if (channel) {
-      await channel.stopWatching(); // para receber eventos do canal
-    }
-    if (onLeave) onLeave(); // geralmente limpa estado, redireciona, etc
+    if (channel) await channel.stopWatching();
+    if (onLeave) onLeave();
   };
 
   if (player === null) return <div>Carregando...</div>;

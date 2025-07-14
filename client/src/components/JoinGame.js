@@ -7,7 +7,7 @@ function JoinGame() {
   const [channel, setChannel] = useState(null);
   const [waitingUsers, setWaitingUsers] = useState([]);
 
-  // Atualiza o usuário atual como "procurando jogo"
+  // Marca usuário atual como procurando jogo ao montar componente
   useEffect(() => {
     const setUserLooking = async () => {
       try {
@@ -23,15 +23,14 @@ function JoinGame() {
     setUserLooking();
   }, [client]);
 
-  // Busca usuários que estão procurando jogo
+  // Busca lista de usuários procurando jogo (exceto o próprio)
   useEffect(() => {
     const fetchWaitingUsers = async () => {
       try {
         const response = await client.queryUsers({
           isLookingForGame: true,
-          id: { $ne: client.userID }, // Exclui o próprio usuário
+          id: { $ne: client.userID },
         });
-
         setWaitingUsers(response.users);
       } catch (err) {
         console.error("Erro ao buscar usuários:", err);
@@ -40,30 +39,32 @@ function JoinGame() {
 
     fetchWaitingUsers();
 
-    // Atualiza a lista a cada 5 segundos
-    const interval = setInterval(fetchWaitingUsers, 5000);
+    // Atualiza lista a cada 7 segundos
+    const interval = setInterval(fetchWaitingUsers, 7000);
     return () => clearInterval(interval);
   }, [client]);
 
+  // Cria canal com adversário e marca ambos como não procurando
   const createChannelWithUser = async (rivalUser) => {
     try {
-      const newChannel = await client.channel("messaging", {
+      const newChannel = client.channel("messaging", {
         members: [client.userID, rivalUser.id],
       });
 
       await newChannel.watch();
       setChannel(newChannel);
 
-      // Opcional: marca ambos como não procurando mais jogo
-      await client.partialUpdateUser({
-        id: client.userID,
-        set: { isLookingForGame: false },
-      });
-
-      await client.partialUpdateUser({
-        id: rivalUser.id,
-        set: { isLookingForGame: false },
-      });
+      // Atualiza flags de "procurando jogo" para false
+      await Promise.all([
+        client.partialUpdateUser({
+          id: client.userID,
+          set: { isLookingForGame: false },
+        }),
+        client.partialUpdateUser({
+          id: rivalUser.id,
+          set: { isLookingForGame: false },
+        }),
+      ]);
     } catch (err) {
       console.error("Erro ao criar canal:", err);
     }
@@ -85,9 +86,9 @@ function JoinGame() {
             <ul>
               {waitingUsers.map((user) => (
                 <li key={user.id}>
-                  {user.name}
+                  <span>{user.name || user.id}</span>
                   <button onClick={() => createChannelWithUser(user)}>
-                    Jogar com {user.name}
+                    Jogar com {user.name || user.id}
                   </button>
                 </li>
               ))}

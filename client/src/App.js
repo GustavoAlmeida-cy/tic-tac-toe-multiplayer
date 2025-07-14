@@ -12,10 +12,9 @@ function App() {
   const token = cookies.get("token");
   const api_key = process.env.REACT_APP_API_KEY;
 
-  // Cria client apenas se a api_key existir
   const client = useMemo(() => {
     if (!api_key) {
-      console.error("API key não definida!");
+      console.error("❌ API key não definida. Verifique seu .env.");
       return null;
     }
     return StreamChat.getInstance(api_key);
@@ -23,19 +22,24 @@ function App() {
 
   const [isConnected, setIsConnected] = useState(false);
   const [isAuth, setIsAuth] = useState(false);
+  const [showLogin, setShowLogin] = useState(true); // alterna entre Login e SignUp
 
   const logOut = () => {
-    cookies.remove("token");
-    cookies.remove("userId");
-    cookies.remove("firstName");
-    cookies.remove("lastName");
-    cookies.remove("username");
-    cookies.remove("hashedPassword");
-    cookies.remove("channelName");
+    const keys = [
+      "token",
+      "userId",
+      "firstName",
+      "lastName",
+      "username",
+      "hashedPassword",
+      "channelName",
+    ];
+    keys.forEach((key) => cookies.remove(key));
 
     if (client) {
       client.disconnectUser();
     }
+
     setIsAuth(false);
     setIsConnected(false);
   };
@@ -45,7 +49,7 @@ function App() {
       if (!token || !client || isConnected) return;
 
       try {
-        const user = await client.connectUser(
+        await client.connectUser(
           {
             id: cookies.get("userId"),
             name: cookies.get("username"),
@@ -56,7 +60,6 @@ function App() {
           token
         );
 
-        console.log("Usuário conectado:", user);
         setIsAuth(true);
         setIsConnected(true);
       } catch (error) {
@@ -67,15 +70,13 @@ function App() {
     };
 
     connectUser();
-
-    // Não desconectamos aqui para evitar perda de token inesperada
   }, [token, client, cookies, isConnected]);
 
   if (!api_key) {
     return (
       <div className="App">
-        <p style={{ color: "red" }}>
-          ERRO: API Key não definida. Verifique seu arquivo .env e reinicie o
+        <p className="error-message">
+          ❌ API Key não definida. Verifique o arquivo `.env` e reinicie o
           servidor.
         </p>
       </div>
@@ -88,15 +89,24 @@ function App() {
         <Chat client={client}>
           <nav className="navbar">
             <button className="logout-button" onClick={logOut}>
-              Log Out
+              🔓 Sair
             </button>
           </nav>
           <JoinGame />
         </Chat>
       ) : (
         <div className="auth-container">
-          <SignUp setIsAuth={setIsAuth} />
-          <Login setIsAuth={setIsAuth} />
+          {showLogin ? (
+            <Login setIsAuth={setIsAuth} />
+          ) : (
+            <SignUp setIsAuth={setIsAuth} />
+          )}
+          <button
+            className="toggle-auth-btn"
+            onClick={() => setShowLogin((prev) => !prev)}
+          >
+            {showLogin ? "🔁 Criar nova conta" : "🔐 Já tenho conta"}
+          </button>
         </div>
       )}
     </div>
