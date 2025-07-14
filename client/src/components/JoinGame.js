@@ -85,7 +85,7 @@ function JoinGame() {
             <ul>
               {waitingUsers.map((user) => (
                 <li key={user.id}>
-                  {user.name}{" "}
+                  {user.name}
                   <button onClick={() => createChannelWithUser(user)}>
                     Jogar com {user.name}
                   </button>

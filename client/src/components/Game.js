@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import Board from "./Board";
 
 function Game({ channel }) {
   const [playersJoined, setPlayersJoined] = useState(
@@ -40,7 +41,7 @@ function Game({ channel }) {
 
   return (
     <div>
-      <h1>Game</h1>
+      <Board />
     </div>
   );
 }
