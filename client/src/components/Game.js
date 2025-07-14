@@ -6,42 +6,60 @@ function Game({ channel }) {
     channel?.state?.watcher_count === 2
   );
 
+  const [result, setResult] = useState({ winner: "", state: "" });
+
+  const [player, setPlayer] = useState(null);
+  const [startingPlayer, setStartingPlayer] = useState("X");
+
   useEffect(() => {
     if (!channel) return;
 
-    const handleWatcherStart = (event) => {
+    // Detectar membros e definir quem é "X" e quem é "O"
+    const members = Object.keys(channel.state.members).sort();
+
+    // Quem estava esperando (menor id) será "X"
+    // Para simplificar, usamos watcher_count para decidir quem está esperando
+    if (channel.state.watcher_count < 2) {
+      // Você está esperando — começa como "X"
+      setPlayer("X");
+      setStartingPlayer("X");
+    } else {
+      // Você entrou depois — será "O"
+      setPlayer("O");
+      setStartingPlayer("X");
+    }
+
+    const handleWatcherStart = () => {
       const count = channel.state.watcher_count;
-      console.log("Watcher joined. Total:", count);
       setPlayersJoined(count === 2);
     };
 
-    const handleWatcherStop = (event) => {
+    const handleWatcherStop = () => {
       const count = channel.state.watcher_count;
-      console.log("Watcher left. Total:", count);
       setPlayersJoined(count === 2);
     };
 
     channel.on("user.watching.start", handleWatcherStart);
     channel.on("user.watching.stop", handleWatcherStop);
 
-    // Limpeza dos listeners quando o componente desmontar ou o channel mudar
     return () => {
       channel.off("user.watching.start", handleWatcherStart);
       channel.off("user.watching.stop", handleWatcherStop);
     };
   }, [channel]);
 
-  if (!playersJoined) {
-    return (
-      <div>
-        <h1>Waiting for other player to join...</h1>
-      </div>
-    );
+  if (!playersJoined || player === null) {
+    return <div>Waiting for other player to join...</div>;
   }
 
   return (
     <div>
-      <Board />
+      <Board
+        result={result}
+        setResult={setResult}
+        player={player}
+        startingPlayer={startingPlayer}
+      />
     </div>
   );
 }
