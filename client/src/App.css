@@ -141,9 +141,12 @@ body {
   height: 360px;
   background-color: white;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  border-radius: 12px;
 }
 
 .square {
+  width: 100%;
+  aspect-ratio: 1 / 1; /* <- adiciona isso */
   display: flex;
   align-items: center;
   justify-content: center;
@@ -152,7 +155,10 @@ body {
   cursor: pointer;
   user-select: none;
   background-color: white;
+  border: none;
   transition: background-color 0.2s, transform 0.1s;
+  white-space: nowrap;
+  overflow: hidden;
 }
 
 /* BORDAS HORIZONTAIS */
@@ -187,7 +193,6 @@ body {
 
 .square:active {
   background-color: var(--square-active);
-  transform: scale(0.97);
 }
 
 h4 {

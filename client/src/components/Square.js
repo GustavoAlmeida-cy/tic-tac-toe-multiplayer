@@ -1,9 +1,9 @@
 import React from "react";
 
-const Square = ({ chooseSquare, val }) => {
+const Square = ({ val, chooseSquare }) => {
   return (
     <div className="square" onClick={chooseSquare}>
-      <span>{val}</span>
+      {val}
     </div>
   );
 };
